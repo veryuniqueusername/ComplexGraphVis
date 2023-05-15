@@ -3,8 +3,13 @@
 	src: url('Symbola.ttf');
 }
 
-:root {
+:root,
+body,
+#app {
 	font-family: Symbola, 'Times New Roman', serif;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
 }
 
 #functions {
@@ -27,4 +32,9 @@
 		font-size: 1em;
 		margin: 6px;
 	}
+}
+
+#canvas-container {
+	height: 100%;
+	flex-grow: 1;
 }
