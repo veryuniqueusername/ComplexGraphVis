@@ -1,0 +1,19 @@
+:root {
+	font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+
+#functions {
+	font-size: 20px;
+	display: flex;
+	width: auto;
+	align-items: center;
+	justify-content: center;
+	& > input {
+		flex-grow: 1;
+		padding: 4px;
+	}
+	& > * {
+		font-size: 1em;
+		margin: 6px;
+	}
+}
