@@ -1,0 +1,37 @@
+{
+  "name": "ComplexGraphVis",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/veryuniqueusername/ComplexGraphVis",
+  "author": "veryuniqueusername <70266105+veryuniqueusername@users.noreply.github.com>",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "build": "babel src -d lib",
+    "start": "react-scripts start"
+  },
+  "dependencies": {
+    "@babel/cli": "^7.21.5",
+    "@babel/core": "^7.21.8",
+    "mathjs": "^11.8.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "^5.0.1",
+    "typescript": "^5.0.4"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.21.5"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
