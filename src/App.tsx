@@ -13,7 +13,9 @@ export default function App() {
 	return (
 		<>
 			<div id="functions">
-				<span>f(z) =</span>
+				<span>
+					<i>f</i>(z) =
+				</span>
 				<input
 					id="function"
 					placeholder="Function (z = a + bi)"

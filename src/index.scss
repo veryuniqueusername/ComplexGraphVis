@@ -1,16 +1,27 @@
+@font-face {
+	font-family: Symbola;
+	src: url('Symbola.ttf');
+}
+
 :root {
-	font-family: Verdana, Geneva, Tahoma, sans-serif;
+	font-family: Symbola, 'Times New Roman', serif;
 }
 
 #functions {
-	font-size: 20px;
+	font-family: 'Times New Roman', serif;
+	font-size: 30px;
 	display: flex;
 	width: auto;
 	align-items: center;
 	justify-content: center;
 	& > input {
+		font-family: Symbola, 'Times New Roman', serif;
+		font-size: 24px;
 		flex-grow: 1;
 		padding: 4px;
+		border-radius: 5px;
+		border: 1.5px solid gray;
+		word-spacing: 0.1em;
 	}
 	& > * {
 		font-size: 1em;
