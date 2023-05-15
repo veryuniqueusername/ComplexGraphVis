@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
+import 'index.css';
 
 // Clear the existing HTML content
 document.body.innerHTML = '<div id="app"></div>';
