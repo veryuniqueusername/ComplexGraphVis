@@ -3,11 +3,13 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import {
 	PerspectiveCamera as DefaultCamera,
+	Line,
 	OrbitControls,
 } from '@react-three/drei';
 import {
 	BufferAttribute,
 	BufferGeometry,
+	Color,
 	DoubleSide,
 	PerspectiveCamera,
 } from 'three';
@@ -28,7 +30,7 @@ console.log();
 
 export default function App() {
 	const [spin, setSpin] = useState(true);
-	const [degMode, setDegMode] = useState(false);
+	const [degMode, setDegMode] = useState(true);
 	const [func, setFunc] = useState('');
 	const [x, setX] = useState([-10, 10]);
 	const [y, setY] = useState([-10, 10]);
@@ -183,8 +185,38 @@ export default function App() {
 					<ambientLight intensity={0.5} />
 					{/* <directionalLight intensity={1} position={[0, 1, 0]} /> */}
 					<mesh>
-						<sphereGeometry args={[1, 10, 10]} />
-						<meshStandardMaterial />
+						<sphereGeometry args={[0.5, 10, 10]} />
+						<meshStandardMaterial color={[0, 0, 0]} />
+						<Line
+							points={[
+								[x[0], 0, 0],
+								[x[1], 0, 0],
+							]}
+							dashed={true}
+							dashSize={1}
+							dashScale={5}
+							lineWidth={2}
+						/>
+						<Line
+							points={[
+								[0, 0, y[0]],
+								[0, 0, y[1]],
+							]}
+							dashed={true}
+							dashSize={1}
+							dashScale={5}
+							lineWidth={2}
+						/>
+						<Line
+							points={[
+								[0, z[0], 0],
+								[0, z[1], 0],
+							]}
+							dashed={true}
+							dashSize={1}
+							dashScale={5}
+							lineWidth={2}
+						/>
 					</mesh>
 					<mesh>
 						<meshStandardMaterial vertexColors side={DoubleSide} />
