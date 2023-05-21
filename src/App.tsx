@@ -116,7 +116,6 @@ export default function App() {
 				normals.push(...[0, 1, 0]);
 				let deg = math.arg(points[i][j]) / (2 * pi);
 				if (deg < 0) deg += 1;
-				console.log(deg);
 				colors.push(...HSVtoRGB(deg, 1, 1));
 			})
 		);
