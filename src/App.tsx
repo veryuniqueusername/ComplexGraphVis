@@ -28,6 +28,7 @@ console.log();
 
 export default function App() {
 	const [spin, setSpin] = useState(true);
+	const [degMode, setDegMode] = useState(false);
 	const [func, setFunc] = useState('');
 	const [x, setX] = useState([-10, 10]);
 	const [y, setY] = useState([-10, 10]);
@@ -114,9 +115,15 @@ export default function App() {
 			arr.forEach((val, j) => {
 				vertices.push(i * step + offsetX, points[i][j].re, j * step + offsetY);
 				normals.push(...[0, 1, 0]);
-				let deg = math.arg(points[i][j]) / (2 * pi);
-				if (deg < 0) deg += 1;
-				colors.push(...HSVtoRGB(deg, 1, 1));
+				if (degMode) {
+					let deg = math.arg(points[i][j]) / (2 * pi);
+					if (deg < 0) deg += 1;
+					colors.push(...HSVtoRGB(deg, 1, 1));
+				} else {
+					colors.push(
+						...HSVtoRGB(0, 0, (points[i][j].im + z[1]) / (z[1] - z[0]))
+					);
+				}
 			})
 		);
 
@@ -168,6 +175,7 @@ export default function App() {
 					onChange={(field) => setFunc(field.latex())}
 				/>
 				<button onClick={() => evaluate()}>Eval</button>
+				<button onClick={() => setDegMode(!degMode)}>Change Mode</button>
 			</div>
 			<div id="canvas-container">
 				<Canvas>
