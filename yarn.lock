@@ -1122,6 +1122,14 @@
   resolved "https://registry.yarnpkg.com/@chevrotain/utils/-/utils-10.5.0.tgz#0ee36f65b49b447fbac71b9e5af5c5c6c98ac057"
   integrity sha512-hBzuU5+JjB2cqNZyszkDHZgOSrUUT8V3dhgRl8Q9Gp6dAj/H5+KILGjbhDpc3Iy9qmqlm/akuOI2ut9VUtzJxQ==
 
+"@cortex-js/compute-engine@^0.12.2":
+  version "0.12.2"
+  resolved "https://registry.yarnpkg.com/@cortex-js/compute-engine/-/compute-engine-0.12.2.tgz#aae78dda9750e75de5dd3173a7b7e0824b223990"
+  integrity sha512-MxXYwCsHzcuzpC81khhp+r0/PN6gO8/Kb9kDeATFUwGqDU0sfejskvmiblQI5xlc323WVSGQOXNemqHFBgCx5g==
+  dependencies:
+    complex.js "^2.1.1"
+    decimal.js "^10.4.0"
+
 "@csstools/normalize.css@*":
   version "12.0.0"
   resolved "https://registry.yarnpkg.com/@csstools/normalize.css/-/normalize.css-12.0.0.tgz#a9583a75c3f150667771f30b60d9f059473e62c4"
@@ -1971,6 +1979,11 @@
   version "0.0.39"
   resolved "https://registry.yarnpkg.com/@types/estree/-/estree-0.0.39.tgz#e177e699ee1b8c22d23174caaa7422644389509f"
   integrity sha512-EYNwp3bU+98cpU4lAWYYL7Zz+2gryWH1qbdDTidVd6hkiR6weksdbMadyXKXNPEkQFhXM+hVO9ZygomHXp+AIw==
+
+"@types/evaluatex@^2.2.4":
+  version "2.2.4"
+  resolved "https://registry.yarnpkg.com/@types/evaluatex/-/evaluatex-2.2.4.tgz#fb276cc1beb463ecc8b74b58dbcca743e60eb9ff"
+  integrity sha512-cgdW2qe4LsJM5JOLYEhsXnjj86d8gRiyhfNvw5ZHxjzJ1FCtd0+flxLm1NlD5EodJv+SDAbUa0VVuI8Z4vxDww==
 
 "@types/express-serve-static-core@*", "@types/express-serve-static-core@^4.17.33":
   version "4.17.35"
@@ -3657,7 +3670,7 @@ debug@^3.2.7:
   dependencies:
     ms "^2.1.1"
 
-decimal.js@^10.2.1, decimal.js@^10.4.3:
+decimal.js@^10.2.1, decimal.js@^10.4.0, decimal.js@^10.4.3:
   version "10.4.3"
   resolved "https://registry.yarnpkg.com/decimal.js/-/decimal.js-10.4.3.tgz#1044092884d245d1b7f65725fa4ad4c6f781cc23"
   integrity sha512-VBBaLc1MgL5XpzgIP7ny5Z6Nx3UrRkIViUkPUdtl9aya5amy3De1gsUUSB1g3+3sExYNjCAsAznmukyxCb1GRA==
@@ -4375,6 +4388,10 @@ etag@~1.8.1:
   version "1.8.1"
   resolved "https://registry.yarnpkg.com/etag/-/etag-1.8.1.tgz#41ae2eeb65efa62268aebfea83ac7d79299b0887"
   integrity sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg==
+
+"evaluatex@file:evaluatex-v2.2.4.tgz":
+  version "2.2.4"
+  resolved "file:evaluatex-v2.2.4.tgz#63a2302ae19f3db52a1d0ffe6769d05b27878a73"
 
 eventemitter3@^4.0.0:
   version "4.0.7"
@@ -5977,6 +5994,11 @@ jiti@^1.18.2:
   resolved "https://registry.yarnpkg.com/jiti/-/jiti-1.18.2.tgz#80c3ef3d486ebf2450d9335122b32d121f2a83cd"
   integrity sha512-QAdOptna2NYiSSpv0O/BwoHBSmz4YhpzJHyi+fnMRTXFjp7B8i/YG5Z8IfusxB1ufjcD2Sre1F3R+nX3fvy7gg==
 
+jquery@^1.12.3:
+  version "1.12.4"
+  resolved "https://registry.yarnpkg.com/jquery/-/jquery-1.12.4.tgz#01e1dfba290fe73deba77ceeacb0f9ba2fec9e0c"
+  integrity sha512-UEVp7PPK9xXYSk8xqXCJrkXnKZtlgWkd2GsAQbMRFK6S/ePU2JN5G2Zum8hIVjzR3CpdfSqdqAzId/xd4TJHeg==
+
 js-sdsl@^4.1.4:
   version "4.4.0"
   resolved "https://registry.yarnpkg.com/js-sdsl/-/js-sdsl-4.4.0.tgz#8b437dbe642daa95760400b602378ed8ffea8430"
@@ -6342,6 +6364,13 @@ mathjs@^11.8.0:
     seedrandom "^3.0.5"
     tiny-emitter "^2.1.0"
     typed-function "^4.1.0"
+
+mathquill@^0.10.1-a:
+  version "0.10.1-a"
+  resolved "https://registry.yarnpkg.com/mathquill/-/mathquill-0.10.1-a.tgz#bf2ca569010063ac34bcd5d529adc0837cd53c3f"
+  integrity sha512-snSAEwAtwdwBFSor+nVBnWWQtTw67kgAgKMyAIxuz4ZPboy0qkWZmd7BL3lfOXp/INihhRlU1PcfaAtDaRhmzA==
+  dependencies:
+    jquery "^1.12.3"
 
 mdn-data@2.0.14:
   version "2.0.14"
@@ -7688,6 +7717,11 @@ react-is@^18.0.0:
   version "18.2.0"
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-18.2.0.tgz#199431eeaaa2e09f86427efbb4f1473edb47609b"
   integrity sha512-xWGDIW6x921xtzPkhiULtthJHoJvBbF3q26fzloPCK0hsvxtPVelvftw3zjbHWSkR2km9Z+4uxbDDK/6Zw9B8w==
+
+react-mathquill@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/react-mathquill/-/react-mathquill-1.0.3.tgz#fe893a1a360a26f19b624cd9859bf2543bbd4bf4"
+  integrity sha512-H0z0FJsrjgKzXA1kR3rxcQyO28bXyeyMUM13VJ9jAn5cA9SJ35eScE5AK46R0O/H5zRyycGlSo2u+Pdxakbpkg==
 
 react-merge-refs@^1.1.0:
   version "1.1.0"

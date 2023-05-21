@@ -1,116 +1,293 @@
 import math from 'customFunctions';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import {
 	PerspectiveCamera as DefaultCamera,
-	Facemesh,
+	OrbitControls,
 } from '@react-three/drei';
-import { PerspectiveCamera } from 'three';
-import { Complex, complex } from 'mathjs';
+import {
+	BufferAttribute,
+	BufferGeometry,
+	DoubleSide,
+	PerspectiveCamera,
+} from 'three';
+import { Complex, complex, pi } from 'mathjs';
+import { lerp } from 'three/src/math/MathUtils';
+import Mathfield from 'Mathfield';
+import { EditableMathField, StaticMathField, addStyles } from 'react-mathquill';
+import evaluatex from 'evaluatex';
+import { ComputeEngine } from '@cortex-js/compute-engine';
+
+// TODO: IF NUMBER IS UNDEFINED, DON'T DRAW TRIGS
+
+addStyles();
+
+const ce = new ComputeEngine({ numericMode: 'complex' });
+
+console.log();
 
 export default function App() {
-	const [split, setSplit] = useState(false);
+	const [spin, setSpin] = useState(true);
 	const [func, setFunc] = useState('');
 	const [x, setX] = useState([-10, 10]);
 	const [y, setY] = useState([-10, 10]);
 	const [z, setZ] = useState([-10, 10]);
 	const [step, setStep] = useState(1);
 	const [points, setPoints] = useState<Complex[][]>([[]]);
-	const [meshes, setMeshes] = useState<any[]>([]);
+	const [meshes, setMeshes] = useState<any>([]);
+	const [cameraX, setCameraX] = useState(50);
+	const [cameraY, setCameraY] = useState(20);
+	const [cameraZ, setCameraZ] = useState(50);
+
+	const bufferGeo = useRef<BufferGeometry>(null!);
+	const posRef = useRef<BufferAttribute>(null!);
+	const normalRef = useRef<BufferAttribute>(null!);
+	const colorRef = useRef<BufferAttribute>(null!);
+	const indexRef = useRef<BufferAttribute>(null!);
+
+	const xFaceCount = (x[1] - x[0]) / step;
+	const yFaceCount = (y[1] - y[0]) / step;
 
 	function evaluate() {
-		let xSize: number = (x[1] - x[0] + 1) / step;
-		let ySize: number = (y[1] - y[0] + 1) / step;
-		let tempPoints: Complex[][] = [];
-		for (let j = 0; j < xSize; j++) {
-			tempPoints.push([]);
-			for (let k = 0; k < ySize; k++) {
-				tempPoints[j].push(complex(0, 0));
+		let xVertCount: number = xFaceCount + 1;
+		let yVertCount: number = yFaceCount + 1;
+		let newPoints: Complex[][] = [];
+		for (let j = 0; j < xVertCount; j++) {
+			newPoints.push([]);
+			for (let k = 0; k < yVertCount; k++) {
+				newPoints[j].push(complex(0, 0));
 			}
 		}
-		console.log(tempPoints);
-		for (let j = 0; j < xSize; j++) {
-			for (let k = 0; k < ySize; k++) {
+		let fn = ce.parse(func);
+		for (let j = 0; j < xVertCount; j++) {
+			for (let k = 0; k < yVertCount; k++) {
 				let scope = {
-					a: j + x[0],
-					b: k + y[0],
-					z: complex(j + x[0], k + y[0]),
+					a: j * step + x[0],
+					b: k * step + y[0],
 				};
-				let res = math.evaluate(func, scope);
-				if (typeof res == 'number') {
-					tempPoints[j][k] = complex(res, 0);
-				} else if (typeof res == 'object') {
-					tempPoints[j][k] = res;
+				ce.set(scope);
+				let res = fn.simplify().N().numericValue;
+				if (res === null) {
+					// console.log({
+					// 	a: scope.a,
+					// 	b: scope.b,
+					// 	res: res,
+					// 	simple: fn.simplify().numericValue,
+					// 	fnNum: fn.numericValue,
+					// 	fn: fn,
+					// 	func: func,
+					// });
+					console.log('null');
+					newPoints[j][k] = complex(0, 0);
+				} else if (typeof res === 'number') {
+					if (res === Infinity) {
+						console.log('infinity');
+					}
+					newPoints[j][k] = complex(res, 0);
+				} else if (isComplex(res)) {
+					newPoints[j][k] = complex(res.re, res.im);
+				} else {
+					console.log('wrong type, not complex');
+					console.log(res);
+					newPoints[j][k] = complex(0, 0);
 				}
 			}
 		}
-		setPoints(tempPoints);
+		setPoints(newPoints);
 	}
 
-	useEffect(() => {
-		let tempMeshes: any[] = [];
+	useLayoutEffect(() => {
+		if (posRef.current === null) return;
+
 		let newPoints = points.slice(0, -1);
-		// console.log(newPoints);
 		newPoints.forEach((arr, i, parent) => (newPoints[i] = arr.slice(0, -1)));
-		newPoints.forEach((arr, i, parent) =>
-			arr.forEach((val, j) =>
-				tempMeshes.push(
-					<mesh position={[i + x[0], parent[i][j].re, j + y[0]]}>
-						<boxGeometry args={[0.5, 0.2, 0.5]} />
-					</mesh>
-				)
-			)
+
+		const offsetX = x[0];
+		const offsetY = y[0];
+
+		const vertices: number[] = [];
+		const normals: number[] = [];
+		const colors: number[] = [];
+		const indices: number[] = [];
+
+		points.forEach((arr, i, parent) =>
+			arr.forEach((val, j) => {
+				vertices.push(i * step + offsetX, points[i][j].re, j * step + offsetY);
+				normals.push(...[0, 1, 0]);
+				let deg = math.arg(points[i][j]) / (2 * pi);
+				if (deg < 0) deg += 1;
+				console.log(deg);
+				colors.push(...HSVtoRGB(deg, 1, 1));
+			})
 		);
-		setMeshes(tempMeshes);
+
+		newPoints.forEach((arr, i, parent) =>
+			arr.forEach((val, j) => {
+				indices.push(
+					...[
+						i * (arr.length + 1) + j,
+						i * (arr.length + 1) + j + 1,
+						(i + 1) * (arr.length + 1) + j,
+						i * (arr.length + 1) + j + 1,
+						(i + 1) * (arr.length + 1) + j,
+						(i + 1) * (arr.length + 1) + j + 1,
+					]
+				);
+			})
+		);
+
+		posRef.current.array = new Float32Array(vertices);
+		posRef.current.count = vertices.length / 3;
+		normalRef.current.array = new Float32Array(normals);
+		normalRef.current.count = normals.length / 3;
+		colorRef.current.array = new Float32Array(colors);
+		colorRef.current.count = colors.length / 3;
+		indexRef.current.array = new Uint16Array(indices);
+		indexRef.current.count = indices.length;
+		posRef.current.needsUpdate = true;
+		normalRef.current.needsUpdate = true;
+		colorRef.current.needsUpdate = true;
+		indexRef.current.needsUpdate = true;
+
+		bufferGeo.current.computeBoundingBox();
+		bufferGeo.current.computeBoundingSphere();
+
 		return () => {};
 	}, [points]);
 
 	return (
 		<>
 			<div id="functions">
-				<span>
-					<i>f</i>(z) =
-				</span>
-				<input
-					id="function"
-					placeholder="Function (z = a + bi)"
-					disabled={split}
-					onChange={(e) => setFunc(e.target.value)}
-					value={func}
+				<button id="play-button" onClick={() => setSpin(!spin)}>
+					<span className="material-symbols-sharp">
+						{spin ? 'pause' : 'play_arrow'}
+					</span>
+				</button>
+				<StaticMathField>{'f\\left(x\\right)='}</StaticMathField>
+				<EditableMathField
+					latex={func}
+					onChange={(field) => setFunc(field.latex())}
 				/>
 				<button onClick={() => evaluate()}>Eval</button>
 			</div>
 			<div id="canvas-container">
 				<Canvas>
-					<MyCamera />
-					<ambientLight intensity={0.2} />
-					<pointLight intensity={0.5} position={[0, 1000, 0]} />
-					<pointLight intensity={0.5} position={[0, 1000, 0]} />
-					<pointLight intensity={0.5} position={[0, 1000, 0]} />
-					<pointLight intensity={0.5} position={[0, 1000, 0]} />
-					{/* <mesh>
-						<boxGeometry args={[5, 2, 2]} />
-						<meshStandardMaterial color={0x11fedd} />
-					</mesh> */}
-					{meshes}
+					<OrbitControls />
+					<ambientLight intensity={0.5} />
+					{/* <directionalLight intensity={1} position={[0, 1, 0]} /> */}
+					<mesh>
+						<sphereGeometry args={[1, 10, 10]} />
+						<meshStandardMaterial />
+					</mesh>
+					<mesh>
+						<meshStandardMaterial vertexColors side={DoubleSide} />
+						<bufferGeometry ref={bufferGeo}>
+							<bufferAttribute
+								ref={posRef}
+								attach={'attributes-position'}
+								array={
+									new Float32Array((xFaceCount + 1) * (yFaceCount + 1) * 3)
+								}
+								count={4}
+								itemSize={3}
+							/>
+							<bufferAttribute
+								ref={normalRef}
+								attach="attributes-normal"
+								array={
+									new Float32Array((xFaceCount + 1) * (yFaceCount + 1) * 3)
+								}
+								count={4}
+								itemSize={3}
+							/>
+							<bufferAttribute
+								ref={colorRef}
+								attach="attributes-color"
+								array={
+									new Float32Array((xFaceCount + 1) * (yFaceCount + 1) * 3)
+								}
+								count={4}
+								itemSize={3}
+							/>
+							<bufferAttribute
+								ref={indexRef}
+								attach={'index'}
+								array={new Uint16Array(xFaceCount * yFaceCount * 6)}
+								count={6}
+								itemSize={1}
+							/>
+						</bufferGeometry>
+					</mesh>
 				</Canvas>
 			</div>
 		</>
 	);
 }
 
-function MyCamera() {
+function MyCamera({ spin, pos }: { spin: boolean; pos: number[] }) {
+	const [x, y, z] = pos;
 	const ref = useRef<PerspectiveCamera>(null!);
 	const time = useRef(0);
 	useFrame((state, delta) => {
+		if (!spin) {
+			ref.current.lookAt(0, 0, 0);
+			return;
+		}
 		time.current += delta;
 		ref.current.position.set(
-			Math.sin(time.current / 3) * 20,
-			Math.sin(time.current / 3) * 6 + 30,
-			Math.cos(time.current / 3) * 20
+			lerp(ref.current.position.x, Math.sin(time.current / 3) * x, 0.04),
+			lerp(ref.current.position.y, Math.sin(time.current / 3) * y + 30, 0.04),
+			lerp(ref.current.position.z, Math.cos(time.current / 3) * z, 0.04)
 		);
 		ref.current.lookAt(0, 0, 0);
 	});
 
-	return <DefaultCamera makeDefault ref={ref} position={[0, 0, 0]} />;
+	return <DefaultCamera makeDefault ref={ref} position={[-15, 15, -15]} />;
+}
+
+function HSVtoRGB(h: number, s: number, v: number) {
+	var r: number,
+		g: number,
+		b: number,
+		i: number,
+		f: number,
+		p: number,
+		q: number,
+		t: number;
+	i = Math.floor(h * 6);
+	f = h * 6 - i;
+	p = v * (1 - s);
+	q = v * (1 - f * s);
+	t = v * (1 - (1 - f) * s);
+	switch (i % 6) {
+		case -1:
+		case 0:
+			(r = v), (g = t), (b = p);
+			break;
+		case 1:
+			(r = q), (g = v), (b = p);
+			break;
+		case 2:
+			(r = p), (g = v), (b = t);
+			break;
+		case 3:
+			(r = p), (g = q), (b = v);
+			break;
+		case 4:
+			(r = t), (g = p), (b = v);
+			break;
+		case 5:
+		case 6:
+			(r = v), (g = p), (b = q);
+			break;
+		default:
+			console.log('default HSVtoRGB');
+			(r = 1), (b = 0), (g = 0);
+			break;
+	}
+	return [r, g, b];
+}
+
+function isComplex(num: any): num is Complex {
+	return (num as Complex).re !== undefined;
 }
