@@ -32,9 +32,9 @@ export default function App() {
 	const [spin, setSpin] = useState(true);
 	const [degMode, setDegMode] = useState(true);
 	const [func, setFunc] = useState('');
-	const [x, setX] = useState([-10, 10]);
-	const [y, setY] = useState([-10, 10]);
-	const [z, setZ] = useState([-10, 10]);
+	const [x, setX] = useState([-100, 100]);
+	const [y, setY] = useState([-100, 100]);
+	const [z, setZ] = useState([-100, 100]);
 	const [step, setStep] = useState(1);
 	const [points, setPoints] = useState<Complex[][]>([[]]);
 	const [meshes, setMeshes] = useState<any>([]);
@@ -180,7 +180,7 @@ export default function App() {
 				<button onClick={() => setDegMode(!degMode)}>Change Mode</button>
 			</div>
 			<div id="canvas-container">
-				<Canvas>
+				<Canvas camera={{ far: 100000 }}>
 					<OrbitControls />
 					<ambientLight intensity={0.5} />
 					{/* <directionalLight intensity={1} position={[0, 1, 0]} /> */}
