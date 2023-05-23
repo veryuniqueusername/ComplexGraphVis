@@ -1,18 +1,14 @@
 import math from 'customFunctions';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Ref, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import {
 	PerspectiveCamera as DefaultCamera,
 	Line,
 	OrbitControls,
+	Text,
 } from '@react-three/drei';
-import {
-	BufferAttribute,
-	BufferGeometry,
-	Color,
-	DoubleSide,
-	PerspectiveCamera,
-} from 'three';
+import { OrbitControls as OrbitControlsType } from 'three-stdlib';
+import { BufferAttribute, BufferGeometry, DoubleSide } from 'three';
 import { Complex, complex, pi } from 'mathjs';
 import { lerp } from 'three/src/math/MathUtils';
 import Mathfield from 'Mathfield';
@@ -26,15 +22,17 @@ addStyles();
 
 const ce = new ComputeEngine({ numericMode: 'complex' });
 
-console.log();
+ce.set({ x: 5 });
+let log = ce.parse('2+x\\times i').N();
+if (log !== null) console.log(log.numericValue);
 
 export default function App() {
 	const [spin, setSpin] = useState(true);
 	const [degMode, setDegMode] = useState(true);
 	const [func, setFunc] = useState('');
-	const [x, setX] = useState([-100, 100]);
-	const [y, setY] = useState([-100, 100]);
-	const [z, setZ] = useState([-100, 100]);
+	const [x, setX] = useState([-40, 40]);
+	const [y, setY] = useState([-40, 40]);
+	const [z, setZ] = useState([-40, 40]);
 	const [step, setStep] = useState(1);
 	const [points, setPoints] = useState<Complex[][]>([[]]);
 	const [meshes, setMeshes] = useState<any>([]);
@@ -47,6 +45,7 @@ export default function App() {
 	const normalRef = useRef<BufferAttribute>(null!);
 	const colorRef = useRef<BufferAttribute>(null!);
 	const indexRef = useRef<BufferAttribute>(null!);
+	const cameraRef = useRef<OrbitControlsType>(null!);
 
 	const xFaceCount = (x[1] - x[0]) / step;
 	const yFaceCount = (y[1] - y[0]) / step;
@@ -159,6 +158,7 @@ export default function App() {
 
 		bufferGeo.current.computeBoundingBox();
 		bufferGeo.current.computeBoundingSphere();
+		// bufferGeo.current.computeVertexNormals();
 
 		return () => {};
 	}, [points]);
@@ -181,12 +181,12 @@ export default function App() {
 			</div>
 			<div id="canvas-container">
 				<Canvas camera={{ far: 100000 }}>
-					<OrbitControls />
+					<OrbitControls ref={cameraRef} />
 					<ambientLight intensity={0.5} />
-					{/* <directionalLight intensity={1} position={[0, 1, 0]} /> */}
+					{/* <directionalLight intensity={1} /> */}
 					<mesh>
 						<sphereGeometry args={[0.5, 10, 10]} />
-						<meshStandardMaterial color={[0, 0, 0]} />
+						<meshBasicMaterial color={[0, 0, 0]} />
 						<Line
 							points={[
 								[x[0], 0, 0],
@@ -197,6 +197,12 @@ export default function App() {
 							dashScale={5}
 							lineWidth={2}
 						/>
+						<DynamicText position={[x[0], 0, 0]} cameraRef={cameraRef}>
+							-a
+						</DynamicText>
+						<DynamicText position={[x[1], 0, 0]} cameraRef={cameraRef}>
+							+a
+						</DynamicText>
 						<Line
 							points={[
 								[0, 0, y[0]],
@@ -207,6 +213,12 @@ export default function App() {
 							dashScale={5}
 							lineWidth={2}
 						/>
+						<DynamicText position={[0, 0, y[0]]} cameraRef={cameraRef}>
+							-b
+						</DynamicText>
+						<DynamicText position={[0, 0, y[1]]} cameraRef={cameraRef}>
+							+b
+						</DynamicText>
 						<Line
 							points={[
 								[0, z[0], 0],
@@ -217,6 +229,12 @@ export default function App() {
 							dashScale={5}
 							lineWidth={2}
 						/>
+						<DynamicText position={[0, z[0], 0]} cameraRef={cameraRef}>
+							-f(z)
+						</DynamicText>
+						<DynamicText position={[0, z[1], 0]} cameraRef={cameraRef}>
+							+f(z)
+						</DynamicText>
 					</mesh>
 					<mesh>
 						<meshStandardMaterial vertexColors side={DoubleSide} />
@@ -263,25 +281,34 @@ export default function App() {
 	);
 }
 
-function MyCamera({ spin, pos }: { spin: boolean; pos: number[] }) {
-	const [x, y, z] = pos;
-	const ref = useRef<PerspectiveCamera>(null!);
-	const time = useRef(0);
+function DynamicText({
+	position,
+	children,
+	cameraRef,
+}: {
+	position: any;
+	children: any;
+	cameraRef: React.MutableRefObject<OrbitControlsType>;
+}) {
+	const ref = useRef<any>(null!);
+
 	useFrame((state, delta) => {
-		if (!spin) {
-			ref.current.lookAt(0, 0, 0);
-			return;
-		}
-		time.current += delta;
-		ref.current.position.set(
-			lerp(ref.current.position.x, Math.sin(time.current / 3) * x, 0.04),
-			lerp(ref.current.position.y, Math.sin(time.current / 3) * y + 30, 0.04),
-			lerp(ref.current.position.z, Math.cos(time.current / 3) * z, 0.04)
-		);
-		ref.current.lookAt(0, 0, 0);
+		if (cameraRef.current === null) return;
+		// console.log(cameraRef.current.position0);
+		ref.current.rotation;
 	});
 
-	return <DefaultCamera makeDefault ref={ref} position={[-15, 15, -15]} />;
+	return (
+		<Text
+			ref={ref}
+			color="black"
+			anchorX="center"
+			anchorY="middle"
+			position={position}
+		>
+			{children}
+		</Text>
+	);
 }
 
 function HSVtoRGB(h: number, s: number, v: number) {
