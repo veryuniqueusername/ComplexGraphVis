@@ -108,7 +108,7 @@ export default function App() {
 					console.log('null @ ' + j + ' ' + k);
 					newPoints[j][k] = complex(0, 0);
 				} else if (typeof res === 'number') {
-					if (res === Infinity) {
+					if (res === Infinity || res === -Infinity) {
 						console.log('infinity');
 					}
 					newPoints[j][k] = swap ? complex(0, res) : complex(res, 0);
@@ -116,13 +116,13 @@ export default function App() {
 					newPoints[j][k] = swap
 						? complex(res.im, res.re)
 						: complex(res.re, res.im);
+					maxZ.current = Math.max(maxZ.current, newPoints[j][k].im);
+					minZ.current = Math.min(minZ.current, newPoints[j][k].im);
 				} else {
 					console.log('wrong type, not complex');
 					console.log(res);
 					newPoints[j][k] = complex(0, 0);
 				}
-				maxZ.current = Math.max(maxZ.current, newPoints[j][k].im);
-				minZ.current = Math.min(minZ.current, newPoints[j][k].im);
 			}
 		}
 		setPoints(newPoints);
