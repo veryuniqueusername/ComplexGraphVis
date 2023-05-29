@@ -65,8 +65,8 @@ export default function App() {
 			: 1
 	);
 
-	const [maxZ, setMaxZ] = useState(0);
-	const [minZ, setMinZ] = useState(0);
+	const maxZ = useRef(0);
+	const minZ = useRef(0);
 	const [points, setPoints] = useState<Complex[][]>([[]]);
 	const [meshes, setMeshes] = useState<any>([]);
 	const [cameraX, setCameraX] = useState(50);
@@ -84,6 +84,8 @@ export default function App() {
 	const yFaceCount = (y[1] - y[0]) / step;
 
 	function evaluate() {
+		maxZ.current = 0;
+		minZ.current = 0;
 		let xVertCount: number = xFaceCount + 1;
 		let yVertCount: number = yFaceCount + 1;
 		let newPoints: Complex[][] = [];
@@ -103,7 +105,7 @@ export default function App() {
 				ce.set(scope);
 				let res = fn.N().simplify().N().numericValue;
 				if (res === null) {
-					console.log('null');
+					console.log('null @ ' + j + ' ' + k);
 					newPoints[j][k] = complex(0, 0);
 				} else if (typeof res === 'number') {
 					if (res === Infinity) {
@@ -119,8 +121,8 @@ export default function App() {
 					console.log(res);
 					newPoints[j][k] = complex(0, 0);
 				}
-				setMaxZ(Math.max(maxZ, newPoints[j][k].im));
-				setMinZ(Math.min(minZ, newPoints[j][k].im));
+				maxZ.current = Math.max(maxZ.current, newPoints[j][k].im);
+				minZ.current = Math.min(minZ.current, newPoints[j][k].im);
 			}
 		}
 		setPoints(newPoints);
@@ -154,7 +156,11 @@ export default function App() {
 					colors.push(...HSVtoRGB(deg, 1, 1));
 				} else {
 					colors.push(
-						...HSVtoRGB(0, 0, (points[i][j].im + maxZ) / (maxZ - minZ))
+						...HSVtoRGB(
+							0,
+							0,
+							(points[i][j].im + maxZ.current) / (maxZ.current - minZ.current)
+						)
 					);
 				}
 			})
@@ -201,7 +207,10 @@ export default function App() {
 				<StaticMathField>{'f\\left(z\\right)='}</StaticMathField>
 				<EditableMathField
 					latex={func}
-					onChange={(field) => setFunc(field.latex())}
+					onChange={(field) => {
+						setFunc(field.latex());
+						save();
+					}}
 				/>
 				<button className="button" onClick={() => evaluate()}>
 					Eval
@@ -297,7 +306,10 @@ export default function App() {
 						className="numberInput"
 						name="scale"
 						step={0.05}
-						onInput={(e) => setScale(parseFloat(e.currentTarget.value))}
+						onInput={(e) => {
+							setScale(parseFloat(e.currentTarget.value));
+							save();
+						}}
 					/>
 					<button className="button" onClick={() => reload()}>
 						Reload
@@ -412,7 +424,7 @@ export default function App() {
 		</>
 	);
 
-	function reload() {
+	function save() {
 		localStorage.setItem(
 			'graphSettings',
 			JSON.stringify({
@@ -426,6 +438,10 @@ export default function App() {
 				scale: scale,
 			})
 		);
+	}
+
+	function reload() {
+		save();
 		window.location.reload();
 	}
 	function reset() {
