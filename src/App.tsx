@@ -294,7 +294,7 @@ export default function App() {
 						className="numberInput"
 						name="step"
 						min={0.1}
-						step={0.5}
+						step={0.1}
 						onInput={(e) =>
 							setStep(Math.max(0.1, parseFloat(e.currentTarget.value)))
 						}
@@ -325,6 +325,13 @@ export default function App() {
 						{/* <directionalLight intensity={1} /> */}
 						<mesh>
 							<sphereGeometry args={[0.5, 10, 10]} />
+							<meshBasicMaterial
+								color={[0, 0, 0]}
+								opacity={0.1}
+								transparent={true}
+							/>
+						</mesh>
+						<mesh>
 							<meshBasicMaterial color={[0, 0, 0]} />
 							<Line
 								points={[
