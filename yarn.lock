@@ -1123,9 +1123,9 @@
   integrity sha512-hBzuU5+JjB2cqNZyszkDHZgOSrUUT8V3dhgRl8Q9Gp6dAj/H5+KILGjbhDpc3Iy9qmqlm/akuOI2ut9VUtzJxQ==
 
 "@cortex-js/compute-engine@^0.12.2":
-  version "0.12.2"
-  resolved "https://registry.yarnpkg.com/@cortex-js/compute-engine/-/compute-engine-0.12.2.tgz#aae78dda9750e75de5dd3173a7b7e0824b223990"
-  integrity sha512-MxXYwCsHzcuzpC81khhp+r0/PN6gO8/Kb9kDeATFUwGqDU0sfejskvmiblQI5xlc323WVSGQOXNemqHFBgCx5g==
+  version "0.12.3"
+  resolved "https://registry.yarnpkg.com/@cortex-js/compute-engine/-/compute-engine-0.12.3.tgz#c046b6e233926cd20f3c305b4855dda364e506fe"
+  integrity sha512-LuiSWMSlgsLFcRWm5ifR8ZeE9HXWOrJ+hE6F211eVI+S+w9SQQvZhhCdUCBusyspW0+29R8lksJPH4qFFr3Xag==
   dependencies:
     complex.js "^2.1.1"
     decimal.js "^10.4.0"

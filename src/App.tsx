@@ -22,18 +22,51 @@ addStyles();
 
 const ce = new ComputeEngine({ numericMode: 'complex' });
 
-ce.set({ x: 5 });
-let log = ce.parse('2+x\\times i').N();
-if (log !== null) console.log(log.numericValue);
-
 export default function App() {
-	const [spin, setSpin] = useState(true);
-	const [degMode, setDegMode] = useState(true);
-	const [func, setFunc] = useState('');
-	const [x, setX] = useState([-40, 40]);
-	const [y, setY] = useState([-40, 40]);
-	const [z, setZ] = useState([-40, 40]);
-	const [step, setStep] = useState(1);
+	const [degMode, setDegMode] = useState(
+		localStorage.getItem('graphSettings') !== null
+			? JSON.parse(localStorage.getItem('graphSettings')!).colorMode
+			: true
+	);
+	const [func, setFunc] = useState<string>(
+		localStorage.getItem('graphSettings') !== null
+			? JSON.parse(localStorage.getItem('graphSettings')!).func
+			: ''
+	);
+	const [swap, setSwap] = useState(
+		localStorage.getItem('graphSettings') !== null
+			? JSON.parse(localStorage.getItem('graphSettings')!).complexMode
+			: false
+	);
+	const [wireframe, setWireframe] = useState(false);
+	const [x, setX] = useState(
+		localStorage.getItem('graphSettings') !== null
+			? JSON.parse(localStorage.getItem('graphSettings')!).x
+			: [-20, 20]
+	);
+	const [y, setY] = useState(
+		localStorage.getItem('graphSettings') !== null
+			? JSON.parse(localStorage.getItem('graphSettings')!).y
+			: [-20, 20]
+	);
+	const [z, setZ] = useState(
+		localStorage.getItem('graphSettings') !== null
+			? JSON.parse(localStorage.getItem('graphSettings')!).z
+			: [-20, 20]
+	);
+	const [step, setStep] = useState(
+		localStorage.getItem('graphSettings') !== null
+			? JSON.parse(localStorage.getItem('graphSettings')!).step
+			: 1
+	);
+	const [scale, setScale] = useState(
+		localStorage.getItem('graphSettings') !== null
+			? JSON.parse(localStorage.getItem('graphSettings')!).scale
+			: 1
+	);
+
+	const [maxZ, setMaxZ] = useState(0);
+	const [minZ, setMinZ] = useState(0);
 	const [points, setPoints] = useState<Complex[][]>([[]]);
 	const [meshes, setMeshes] = useState<any>([]);
 	const [cameraX, setCameraX] = useState(50);
@@ -68,31 +101,26 @@ export default function App() {
 					b: k * step + y[0],
 				};
 				ce.set(scope);
-				let res = fn.simplify().N().numericValue;
+				let res = fn.N().simplify().N().numericValue;
 				if (res === null) {
-					// console.log({
-					// 	a: scope.a,
-					// 	b: scope.b,
-					// 	res: res,
-					// 	simple: fn.simplify().numericValue,
-					// 	fnNum: fn.numericValue,
-					// 	fn: fn,
-					// 	func: func,
-					// });
 					console.log('null');
 					newPoints[j][k] = complex(0, 0);
 				} else if (typeof res === 'number') {
 					if (res === Infinity) {
 						console.log('infinity');
 					}
-					newPoints[j][k] = complex(res, 0);
+					newPoints[j][k] = swap ? complex(0, res) : complex(res, 0);
 				} else if (isComplex(res)) {
-					newPoints[j][k] = complex(res.re, res.im);
+					newPoints[j][k] = swap
+						? complex(res.im, res.re)
+						: complex(res.re, res.im);
 				} else {
 					console.log('wrong type, not complex');
 					console.log(res);
 					newPoints[j][k] = complex(0, 0);
 				}
+				setMaxZ(Math.max(maxZ, newPoints[j][k].im));
+				setMinZ(Math.min(minZ, newPoints[j][k].im));
 			}
 		}
 		setPoints(newPoints);
@@ -114,7 +142,11 @@ export default function App() {
 
 		points.forEach((arr, i, parent) =>
 			arr.forEach((val, j) => {
-				vertices.push(i * step + offsetX, points[i][j].re, j * step + offsetY);
+				vertices.push(
+					i * step + offsetX,
+					points[i][j].re * scale,
+					j * step + offsetY
+				);
 				normals.push(...[0, 1, 0]);
 				if (degMode) {
 					let deg = math.arg(points[i][j]) / (2 * pi);
@@ -122,7 +154,7 @@ export default function App() {
 					colors.push(...HSVtoRGB(deg, 1, 1));
 				} else {
 					colors.push(
-						...HSVtoRGB(0, 0, (points[i][j].im + z[1]) / (z[1] - z[0]))
+						...HSVtoRGB(0, 0, (points[i][j].im + maxZ) / (maxZ - minZ))
 					);
 				}
 			})
@@ -166,119 +198,240 @@ export default function App() {
 	return (
 		<>
 			<div id="functions">
-				<button id="play-button" onClick={() => setSpin(!spin)}>
-					<span className="material-symbols-sharp">
-						{spin ? 'pause' : 'play_arrow'}
-					</span>
-				</button>
-				<StaticMathField>{'f\\left(x\\right)='}</StaticMathField>
+				<StaticMathField>{'f\\left(z\\right)='}</StaticMathField>
 				<EditableMathField
 					latex={func}
 					onChange={(field) => setFunc(field.latex())}
 				/>
-				<button onClick={() => evaluate()}>Eval</button>
-				<button onClick={() => setDegMode(!degMode)}>Change Mode</button>
+				<button className="button" onClick={() => evaluate()}>
+					Eval
+				</button>
+				<button className="button" onClick={() => setDegMode(!degMode)}>
+					Color Mode
+				</button>
+				<button className="button" onClick={() => setSwap(!swap)}>
+					Swap Complex
+				</button>
+				<button className="button" onClick={() => setWireframe(!wireframe)}>
+					Wireframe
+				</button>
 			</div>
-			<div id="canvas-container">
-				<Canvas camera={{ far: 100000 }}>
-					<OrbitControls ref={cameraRef} />
-					<ambientLight intensity={0.5} />
-					{/* <directionalLight intensity={1} /> */}
-					<mesh>
-						<sphereGeometry args={[0.5, 10, 10]} />
-						<meshBasicMaterial color={[0, 0, 0]} />
-						<Line
-							points={[
-								[x[0], 0, 0],
-								[x[1], 0, 0],
-							]}
-							dashed={true}
-							dashSize={1}
-							dashScale={5}
-							lineWidth={2}
-						/>
-						<DynamicText position={[x[0], 0, 0]} cameraRef={cameraRef}>
-							-a
-						</DynamicText>
-						<DynamicText position={[x[1], 0, 0]} cameraRef={cameraRef}>
-							+a
-						</DynamicText>
-						<Line
-							points={[
-								[0, 0, y[0]],
-								[0, 0, y[1]],
-							]}
-							dashed={true}
-							dashSize={1}
-							dashScale={5}
-							lineWidth={2}
-						/>
-						<DynamicText position={[0, 0, y[0]]} cameraRef={cameraRef}>
-							-b
-						</DynamicText>
-						<DynamicText position={[0, 0, y[1]]} cameraRef={cameraRef}>
-							+b
-						</DynamicText>
-						<Line
-							points={[
-								[0, z[0], 0],
-								[0, z[1], 0],
-							]}
-							dashed={true}
-							dashSize={1}
-							dashScale={5}
-							lineWidth={2}
-						/>
-						<DynamicText position={[0, z[0], 0]} cameraRef={cameraRef}>
-							-f(z)
-						</DynamicText>
-						<DynamicText position={[0, z[1], 0]} cameraRef={cameraRef}>
-							+f(z)
-						</DynamicText>
-					</mesh>
-					<mesh>
-						<meshStandardMaterial vertexColors side={DoubleSide} />
-						<bufferGeometry ref={bufferGeo}>
-							<bufferAttribute
-								ref={posRef}
-								attach={'attributes-position'}
-								array={
-									new Float32Array((xFaceCount + 1) * (yFaceCount + 1) * 3)
-								}
-								count={4}
-								itemSize={3}
+			<div id="container">
+				<div id="settings">
+					<label htmlFor="minA">Min A</label>
+					<input
+						type="number"
+						value={x[0]}
+						className="numberInput"
+						name="minA"
+						onInput={(e) =>
+							setX([Math.min(x[1], parseInt(e.currentTarget.value)), x[1]])
+						}
+					/>
+					<label htmlFor="maxA">Max A</label>
+					<input
+						type="number"
+						value={x[1]}
+						className="numberInput"
+						name="maxA"
+						onInput={(e) =>
+							setX([x[0], Math.max(x[0], parseInt(e.currentTarget.value))])
+						}
+					/>
+					<label htmlFor="minB">Min B</label>
+					<input
+						type="number"
+						value={y[0]}
+						className="numberInput"
+						name="minB"
+						onInput={(e) =>
+							setY([Math.min(y[1], parseInt(e.currentTarget.value)), y[1]])
+						}
+					/>
+					<label htmlFor="maxB">Max B</label>
+					<input
+						type="number"
+						value={y[1]}
+						className="numberInput"
+						name="maxB"
+						onInput={(e) =>
+							setY([y[0], Math.max(y[0], parseInt(e.currentTarget.value))])
+						}
+					/>
+					<label htmlFor="minZ">Min Z</label>
+					<input
+						type="number"
+						value={z[0]}
+						className="numberInput"
+						name="minZ"
+						onInput={(e) =>
+							setZ([Math.min(z[1], parseInt(e.currentTarget.value)), z[1]])
+						}
+					/>
+					<label htmlFor="maxZ">Max Z</label>
+					<input
+						type="number"
+						value={z[1]}
+						className="numberInput"
+						name="maxZ"
+						onInput={(e) =>
+							setZ([z[0], Math.max(z[0], parseInt(e.currentTarget.value))])
+						}
+					/>
+					<label htmlFor="step">Step</label>
+					<input
+						type="number"
+						value={step}
+						className="numberInput"
+						name="step"
+						min={0.1}
+						step={0.5}
+						onInput={(e) =>
+							setStep(Math.max(0.1, parseFloat(e.currentTarget.value)))
+						}
+					/>
+					<label htmlFor="scale">Scale</label>
+					<input
+						type="number"
+						value={scale}
+						className="numberInput"
+						name="scale"
+						step={0.05}
+						onInput={(e) => setScale(parseFloat(e.currentTarget.value))}
+					/>
+					<button className="button" onClick={() => reload()}>
+						Reload
+					</button>
+					<button className="button" onClick={() => reset()}>
+						Reset
+					</button>
+				</div>
+				<div id="canvas-container">
+					<Canvas camera={{ far: 100000 }}>
+						<OrbitControls ref={cameraRef} />
+						<ambientLight intensity={0.5} />
+						{/* <directionalLight intensity={1} /> */}
+						<mesh>
+							<sphereGeometry args={[0.5, 10, 10]} />
+							<meshBasicMaterial color={[0, 0, 0]} />
+							<Line
+								points={[
+									[x[0], 0, 0],
+									[x[1], 0, 0],
+								]}
+								dashed={true}
+								dashSize={1}
+								dashScale={5}
+								lineWidth={2}
 							/>
-							<bufferAttribute
-								ref={normalRef}
-								attach="attributes-normal"
-								array={
-									new Float32Array((xFaceCount + 1) * (yFaceCount + 1) * 3)
-								}
-								count={4}
-								itemSize={3}
+							<DynamicText position={[x[0], 0, 0]} cameraRef={cameraRef}>
+								-a
+							</DynamicText>
+							<DynamicText position={[x[1], 0, 0]} cameraRef={cameraRef}>
+								+a
+							</DynamicText>
+							<Line
+								points={[
+									[0, 0, y[0]],
+									[0, 0, y[1]],
+								]}
+								dashed={true}
+								dashSize={1}
+								dashScale={5}
+								lineWidth={2}
 							/>
-							<bufferAttribute
-								ref={colorRef}
-								attach="attributes-color"
-								array={
-									new Float32Array((xFaceCount + 1) * (yFaceCount + 1) * 3)
-								}
-								count={4}
-								itemSize={3}
+							<DynamicText position={[0, 0, y[0]]} cameraRef={cameraRef}>
+								-b
+							</DynamicText>
+							<DynamicText position={[0, 0, y[1]]} cameraRef={cameraRef}>
+								+b
+							</DynamicText>
+							<Line
+								points={[
+									[0, z[0], 0],
+									[0, z[1], 0],
+								]}
+								dashed={true}
+								dashSize={1}
+								dashScale={5}
+								lineWidth={2}
 							/>
-							<bufferAttribute
-								ref={indexRef}
-								attach={'index'}
-								array={new Uint16Array(xFaceCount * yFaceCount * 6)}
-								count={6}
-								itemSize={1}
+							<DynamicText position={[0, z[0], 0]} cameraRef={cameraRef}>
+								-f(z)
+							</DynamicText>
+							<DynamicText position={[0, z[1], 0]} cameraRef={cameraRef}>
+								+f(z)
+							</DynamicText>
+						</mesh>
+						<mesh>
+							<meshStandardMaterial
+								vertexColors
+								side={DoubleSide}
+								wireframe={wireframe}
 							/>
-						</bufferGeometry>
-					</mesh>
-				</Canvas>
+							<bufferGeometry ref={bufferGeo}>
+								<bufferAttribute
+									ref={posRef}
+									attach={'attributes-position'}
+									array={
+										new Float32Array((xFaceCount + 1) * (yFaceCount + 1) * 3)
+									}
+									count={4}
+									itemSize={3}
+								/>
+								<bufferAttribute
+									ref={normalRef}
+									attach="attributes-normal"
+									array={
+										new Float32Array((xFaceCount + 1) * (yFaceCount + 1) * 3)
+									}
+									count={4}
+									itemSize={3}
+								/>
+								<bufferAttribute
+									ref={colorRef}
+									attach="attributes-color"
+									array={
+										new Float32Array((xFaceCount + 1) * (yFaceCount + 1) * 3)
+									}
+									count={4}
+									itemSize={3}
+								/>
+								<bufferAttribute
+									ref={indexRef}
+									attach={'index'}
+									array={new Uint16Array(xFaceCount * yFaceCount * 6)}
+									count={6}
+									itemSize={1}
+								/>
+							</bufferGeometry>
+						</mesh>
+					</Canvas>
+				</div>
 			</div>
 		</>
 	);
+
+	function reload() {
+		localStorage.setItem(
+			'graphSettings',
+			JSON.stringify({
+				x: x,
+				y: y,
+				z: z,
+				func: func,
+				colorMode: degMode,
+				complexMode: swap,
+				step: step,
+				scale: scale,
+			})
+		);
+		window.location.reload();
+	}
+	function reset() {
+		localStorage.removeItem('graphSettings');
+		window.location.reload();
+	}
 }
 
 function DynamicText({
